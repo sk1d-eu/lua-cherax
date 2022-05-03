@@ -1,4 +1,4 @@
---[  @@@@@@   @@@  @@@  @@@  @@@@@@@        @@@   @@@@@@   @@@@@@@@   ]--
+--[  @@@@@@   @@@  @@@  @@@  @@@@@@@        @@@   @@@@@@   @@@@@@@@  ]--
 --[ @@@@@@@   @@@  @@@  @@@  @@@@@@@@      @@@@  @@@@@@@@  @@@@@@@@  ]--
 --[ !@@       @@!  !@@  @@!  @@!  @@@     @@@!!  @@!  @@@       @@!  ]--
 --[ !@!       !@!  @!!  !@!  !@!  @!@       !@!  !@!  @!@      !@!   ]--
@@ -8,41 +8,139 @@
 --[     !:!   :!:  !:!  :!:  :!:  !:!       :!:  :!:  !:!  :!:       ]--
 --[ :::: ::    ::  :::   ::   :::: ::       :::  ::::: ::   ::       ]--
 --[ :: : :     :   :::  :    :: :  :         ::   : :  :   : :       ]--
---[      some things are based on the Cherax Upgrade from SATTY      ]--
-
 
 g_lua.register()
 
-g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Custom License! v2\nHave Fun!", 5000)
+g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Vehicle Options v3 \nHave Fun!", 5000)
 g_gui.add_toast("Suggestions to my Discord: ODIN.eu#4435", 5000)
 
-local spamdoors = false
-local flashy_brake = false
-local SetSpeed = false 
-local complete_s = false
+
+-- global
+
+VehicleBrake = false
+reative_neon = false
+brake_neon = false
+neons_circle_l = false
+neons_circle_r = false
+neons_follow = false
+neons_chase = false
+neons_police = false
+neons_random = false
+neons_random2 = false
+set_neon_delay = 100
+complete_l = true
+complete_r = true
+complete_f = true
+complete_c = true
+complete_p = true
+complete_ra = true
+complete_ra2 = true
+local set_degree = 180
 modify = false
 modifier = 0
+VehicleBrakeTog = false
+local spamdoors = false
+local flashy_brake = false
 
-function SetSpeed(value)
-    if complete_s then
-        local complete_s = false
-        if tonumber(value) and tonumber(value) > 0 then
-            modifier = tonumber(value)
+
+-- gui
+
+g_gui.add_input_int("vehicle_quick_actions", "Degree", set_degree, 1, 2147483647, 1, 1, function(int) set_degree = int end)
+g_gui.add_button("vehicle_quick_actions", "Turn Vehicle", function() rotate(g_util.get_selected_player()) end)
+g_gui.add_toggle("vehicle_options", "Better Vehicle Fly", "WASD: Moving | CapsLock: Up | Shift: Speed | Ctrl: Down | Mouse: Rotate", function(on) noclip=on Noclip(g_util.get_selected_player()) end)
+g_gui.add_toggle("vehicle_options", "Anti Lock On", "Prevent Rockets to lock on you.", function(on) lockon=on AntiLockOn(g_util.get_selected_player()) end)
+g_gui.add_toggle("vehicle_options", "Neon Features", function(on) neon_window=on
+    if neon_window then
+        neonwindow = g_hooking.register_D3D_hook(Neon_Options)
+    else
+        g_hooking.unregister_hook(neonwindow)
+    end
+end)
+g_gui.add_toggle("vehicle_options", "Fun Options", function(on) fun_window=on
+    if fun_window then
+        funwindow = g_hooking.register_D3D_hook(Vehicl_fun_Options)
+    else
+        g_hooking.unregister_hook(funwindow)
+    end
+end)
+g_gui.add_toggle("vehicle_options", "Usefull-isch Options", function(on) usefull_window=on
+    if usefull_window then
+        usefullwindow = g_hooking.register_D3D_hook(Usefull_Options)
+    else
+        g_hooking.unregister_hook(usefullwindow)
+    end
+end)
+
+
+-- imgui
+
+function Neon_Options()
+    if g_gui.is_open() then
+		g_imgui.set_next_window_size(vec2(250, 300))
+		if g_imgui.begin_window("Neons Menu", ImGuiWindowFlags_NoResize) then
+        g_imgui.begin_child("mod_menu", vec2(), true)
+        g_imgui.add_checkbox("Brake Neons", function(bool) brake_neon = bool end)
+        g_imgui.add_checkbox("Police Neons", function(bool) neons_police = bool end)
+        g_imgui.add_checkbox("Reactive Neons", function(bool) reative_neon = bool end)
+        g_imgui.add_input_string("Set Speed", function(value) setneondelay(value) end)
+        g_imgui.add_checkbox("Chasing Neons", function(bool) neons_chase = bool end)
+        g_imgui.add_checkbox("Circle Neons (Left)", function(bool) neons_circle_l = bool end)
+        g_imgui.add_checkbox("Circle Neons (Right)", function(bool) neons_circle_r = bool end)
+        g_imgui.add_checkbox("Following Neons", function(bool) neons_follow = bool end)
+        g_imgui.add_checkbox("Random Neon", function(bool) neons_random = bool  end)
+        g_imgui.add_checkbox("Random Neons 2", function(bool) neons_random2 = bool end)
+        g_imgui.end_child()
+        g_imgui.end_window()
         end
-        SYSTEM.WAIT(10)
-        local complete_s = true
     end
 end
 
-function addBlip(entity, blipSprite, colour)
-    local blip_ptr = g_memory.allocate(4)
-    local blip = UI.ADD_BLIP_FOR_ENTITY(entity)
-    g_memory.write_int(blip_ptr, blip)
-    UI.SET_BLIP_SPRITE(blip, blipSprite)
-    UI.SET_BLIP_COLOUR(blip, colour)
-    local netId = NETWORK.NETWORK_GET_NETWORK_ID_FROM_ENTITY(entity)
-    g_memory.free(blip_ptr)
+function Vehicl_fun_Options()
+    if g_gui.is_open() then
+        local length = 315
+        local btn_height = 25
+		g_imgui.set_next_window_size(vec2(350, 300))
+		if g_imgui.begin_window("Vehicle Fun Options", ImGuiWindowFlags_NoResize) then
+        g_imgui.begin_child("mod_menu", vec2(), true)
+        g_imgui.add_button("BOOST", vec2(length, btn_height), function() boost(g_util.get_selected_player()) end)
+        g_imgui.add_button("BOOST reverse", vec2(length, btn_height), function() boostrv(g_util.get_selected_player()) end)
+        g_imgui.add_button("Flip", vec2(length, btn_height), function() flip(g_util.get_selected_player()) end)
+        g_imgui.add_button("Pop all tires", vec2(length, btn_height), function() poptires(g_util.get_selected_player()) end)
+        g_imgui.add_button("Pop front left tire", vec2(length, btn_height), function() poptires_fl(g_util.get_selected_player()) end)
+        g_imgui.add_button("Pop front right tire", vec2(length, btn_height), function() poptires_fr(g_util.get_selected_player()) end)
+        g_imgui.add_button("Pop rear right tire", vec2(length, btn_height), function() poptires_rr(g_util.get_selected_player()) end)
+        g_imgui.add_button("Pop rear left tire", vec2(length, btn_height), function() poptires_rl(g_util.get_selected_player()) end)
+        g_imgui.add_checkbox("Spammy Doors", function(on) spamdoors=on SpamDoors(g_util.get_selected_player()) end)
+        g_imgui.end_child()
+        g_imgui.end_window()
+        end
+    end
 end
+
+function Usefull_Options()
+    if g_gui.is_open() then
+        local length = 315
+        local btn_height = 25
+		g_imgui.set_next_window_size(vec2(350, 300))
+		if g_imgui.begin_window("Usefull-isch Options", ImGuiWindowFlags_NoResize) then
+        g_imgui.begin_child("mod_menu", vec2(), true)
+        g_imgui.add_input_string("Set Veh Speed", function(value) SetSpeed(value) end)
+        g_imgui.add_checkbox("Modify Speed", function(value) modify = value end)
+        g_imgui.add_checkbox("Instant Handbrake", function(value) VehicleBrakeTog = value end)
+        g_imgui.add_checkbox("Tesla Autopilot", function(on) autodrive=on driveWaypoint(g_util.get_selected_player()) end)
+        g_imgui.add_button("Open Window Front Left", vec2(length, btn_height), function() remove_window_fl(g_util.get_selected_player()) end)
+        g_imgui.add_button("Open Window Front Right", vec2(length, btn_height), function() remove_window_fr(g_util.get_selected_player()) end)
+        g_imgui.add_button("Open Window Rear Left", vec2(length, btn_height), function() remove_window_rl(g_util.get_selected_player()) end)
+        g_imgui.add_button("Open Window Rear Right", vec2(length, btn_height), function() remove_window_rr(g_util.get_selected_player()) end)
+        g_imgui.add_checkbox("ABS Like Brake lights", function(bool) flashy_brake = bool end)
+        g_imgui.end_child()
+        g_imgui.end_window()
+        end
+    end
+end
+
+
+-- needed
 
 function rqCtrl(entity, t)
     if ENTITY.DOES_ENTITY_EXIST(entity) then
@@ -62,6 +160,16 @@ function rqCtrl(entity, t)
     return false
 end
 
+function addBlip(entity, blipSprite, colour)
+    local blip_ptr = g_memory.allocate(4)
+    local blip = UI.ADD_BLIP_FOR_ENTITY(entity)
+    g_memory.write_int(blip_ptr, blip)
+    UI.SET_BLIP_SPRITE(blip, blipSprite)
+    UI.SET_BLIP_COLOUR(blip, colour)
+    local netId = NETWORK.NETWORK_GET_NETWORK_ID_FROM_ENTITY(entity)
+    g_memory.free(blip_ptr)
+end
+
 function is_veh_personal(veh)
     local blip = UI.GET_BLIP_FROM_ENTITY(veh)
     bliptype = UI.GET_BLIP_INFO_ID_TYPE(blip)
@@ -72,173 +180,12 @@ function is_veh_personal(veh)
     end
 end
 
-function rotate45() 
 
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+-- vehicle functions
 
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-45, 5, true)
-    end
-end
-
-function rotate90() 
-
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-90, 5, true)
-    end
-end
-
-function rotate135() 
-
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-135, 5, true)
-    end
-end
-
-function rotate() 
-
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-180, 5, true)
-    end
-end
-
-function rotate225() 
-
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-225, 5, true)
-    end
-end
-
-function rotate270() 
-
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-270, 5, true)
-    end
-end
-
-function rotate315() 
-
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-315, 5, true)
-    end
-end
-
-function boostrv()
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-    if rqCtrl(vehicle, 0.5) then
-        VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, -100000)
-    end
-end
-
-function boost()
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-    if rqCtrl(vehicle, 0.5) then
-        VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, 100000)
-    end
-end
-
-function flip()
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
-    if rqCtrl(vehicle, 0.5) then
-        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x-180, rot.y, rot.z, 5, true)
-    end
-end
-
-function AntiLockOn()
-    while true do
-        if lockon == false then
-            v = PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID())
-            if v == true then
-                local veh = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-                VEHICLE.SET_VEHICLE_CAN_BE_LOCKED_ON(veh, true, true)
-            end
-        elseif lockon == true then
-            v = PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID())
-            if v == true then
-                local veh = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-                VEHICLE.SET_VEHICLE_CAN_BE_LOCKED_ON(veh, false, true)
-            end
-        end
-        SYSTEM.WAIT(100)
-        if lockon == false then break end
-    end
-end
-
-function poptires()
-    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-    if rqCtrl(vehicle, 0.5) then
-        VEHICLE.SET_VEHICLE_TYRES_CAN_BURST(vehicle, true)
-        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 0, true, 1000.0)
-        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 1, true, 1000.0)
-        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 2, true, 1000.0)
-        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 3, true, 1000.0)
-        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 4, true, 1000.0)
-        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 5, true, 1000.0)
-    end
-end
- 
-function VehicleBrake(value)
-    VehicleBrakeTog = value
-end
-
-function driveWaypoint()
-
-    if autodrive == true then
-
-        local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.GET_PLAYER_PED(PLAYER.PLAYER_ID()), false)
-         blip = UI.GET_FIRST_BLIP_INFO_ID(8)
-	    if UI.DOES_BLIP_EXIST(blip) then
-	    	local Cor = UI.GET_BLIP_INFO_ID_COORD(blip)
-            TASK.TASK_VEHICLE_DRIVE_TO_COORD_LONGRANGE(PLAYER.GET_PLAYER_PED(PLAYER.PLAYER_ID()), vehicle, Cor.x, Cor.y, Cor.z, 100, 1074528293, 5)
-            waypointcheck = true
-
-        end
-    end
-end
-
-function SpamDoors()
-
-    if spamdoors then
-        local spamdoors = false
-        local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
-        PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID())
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 0, true, true)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 1, true, true)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 2, true, true)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 3, true, true)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 4, true, true)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 5, true, true)
-        SYSTEM.WAIT(100)
-        VEHICLE.SET_VEHICLE_DOORS_SHUT(vehicle, true)
-        SYSTEM.WAIT(100)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 0, false, false)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 1, false, false)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 2, false, false)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 3, false, false)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 4, false, false)
-        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 5, false, false)
-        SYSTEM.WAIT(100)
-        local spamdoors = true
+function SetSpeed(value)
+    if tonumber(value) and tonumber(value) > 0 then
+        modifier = tonumber(value)
     end
 end
 
@@ -306,37 +253,499 @@ function Noclip()
     end
 end
 
-g_gui.add_input_int("vehicle_options", "Set Speed", modifier, -2147483647, 2147483647, 1, 1, function(int) modifier = int end)
-g_gui.add_toggle("vehicle_options", "Speed", function(bool) SetSpeed = bool end)
-g_gui.add_button("vehicle_quick_actions", "Turn Vehicle 45° R", function() rotate45(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "Turn Vehicle 90° R", function() rotate90(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "Turn Vehicle 135° R", function() rotate135(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "Turn Vehicle 45° L", function() rotate315(g_util.get_selected_player()) end) 
-g_gui.add_button("vehicle_quick_actions", "Turn Vehicle 90° L", function() rotate270(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "Turn Vehicle 225° L", function() rotate225(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "Turn Vehicle", function() rotate(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "BOOST", function() boost(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "BOOST, but reverse", function() boostrv(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "Flip", function() flip(g_util.get_selected_player()) end)
-g_gui.add_button("vehicle_quick_actions", "Pop Your Tires", function() poptires(g_util.get_selected_player()) end)
-g_gui.add_toggle("vehicle_options", "Better Vehicle Fly", "WASD: Moving | CapsLock: Up | Shift: Speed | Ctrl: Down | Mouse: Rotate", function(on) noclip=on Noclip(g_util.get_selected_player()) end)
-g_gui.add_toggle("vehicle_options", "Instant Handbrake", "Key: SPACE , you can also brake mid air.", function(on) VehicleBrake(g_util.get_selected_player()) end)
-g_gui.add_toggle("vehicle_options", "Anti Lock On", "Prevent Rockets to lock on you.", function(on) lockon=on AntiLockOn(g_util.get_selected_player()) end)
-g_gui.add_toggle("vehicle_options", "Tesla Autopilot", "Drives you to your Waypoint.", function(on) autodrive=on driveWaypoint(g_util.get_selected_player()) end)
-g_gui.add_toggle("vehicle_options", "Flashing Brakelight", "Flash the Brake light while braking, ABS like.", function(bool) flashy_brake = bool end)
-g_gui.add_toggle("vehicle_options", "Spam Doors", "Spam Open/Close your doors. (you will lose your bonet)", function(on) spamdoors=on SpamDoors(g_util.get_selected_player()) end)
+function AntiLockOn()
+    while true do
+        if lockon == false then
+            v = PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID())
+            if v == true then
+                local veh = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+                VEHICLE.SET_VEHICLE_CAN_BE_LOCKED_ON(veh, true, true)
+            end
+        elseif lockon == true then
+            v = PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID())
+            if v == true then
+                local veh = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+                VEHICLE.SET_VEHICLE_CAN_BE_LOCKED_ON(veh, false, true)
+            end
+        end
+        SYSTEM.WAIT(100)
+        if lockon == false then break end
+    end
+end
+
+function rotate() 
+
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+
+    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
+    if rqCtrl(vehicle, 0.5) then
+        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x, rot.y, rot.z-(set_degree), 5, true)
+    end
+end
+
+function boostrv(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, -100000)
+    end
+end
+
+function boost(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, 100000)
+    end
+end
+
+function flip(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    local rot = ENTITY.GET_ENTITY_ROTATION(vehicle, 5)
+    if rqCtrl(vehicle, 0.5) then
+        ENTITY.SET_ENTITY_ROTATION(vehicle, rot.x-180, rot.y, rot.z, 5, true)
+    end
+end
+
+function poptires(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.SET_VEHICLE_TYRES_CAN_BURST(vehicle, true)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 0, true, 1000.0)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 1, true, 1000.0)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 2, true, 1000.0)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 3, true, 1000.0)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 4, true, 1000.0)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 5, true, 1000.0)
+    end
+end
+
+function poptires_fl(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.SET_VEHICLE_TYRES_CAN_BURST(vehicle, true)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 0, true, 1000.0)
+    end
+end
+
+function poptires_fr(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.SET_VEHICLE_TYRES_CAN_BURST(vehicle, true)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 1, true, 1000.0)
+    end
+end
+
+function poptires_rr(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.SET_VEHICLE_TYRES_CAN_BURST(vehicle, true)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 5, true, 1000.0)
+    end
+end
+
+function poptires_rl(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.SET_VEHICLE_TYRES_CAN_BURST(vehicle, true)
+        VEHICLE.SET_VEHICLE_TYRE_BURST(vehicle, 4, true, 1000.0)
+    end
+end
+
+function VehicleBrake(value)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.GET_PLAYER_PED(PLAYER.PLAYER_ID()), true)
+        if CONTROL.IS_CONTROL_PRESSED(22, 22) then
+            VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, 0)
+        end
+end
+
+function driveWaypoint()
+    if autodrive == true then
+        local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.GET_PLAYER_PED(PLAYER.PLAYER_ID()), false)
+         blip = UI.GET_FIRST_BLIP_INFO_ID(8)
+	    if UI.DOES_BLIP_EXIST(blip) then
+	    	local Cor = UI.GET_BLIP_INFO_ID_COORD(blip)
+            TASK.TASK_VEHICLE_DRIVE_TO_COORD_LONGRANGE(PLAYER.GET_PLAYER_PED(PLAYER.PLAYER_ID()), vehicle, Cor.x, Cor.y, Cor.z, 100, 1074528293, 5)
+            waypointcheck = true
+
+        end
+    end
+end
+
+function SpamDoors()
+
+    if spamdoors then
+        local spamdoors = false
+        local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+        PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID())
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 0, true, true)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 1, true, true)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 2, true, true)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 3, true, true)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 4, true, true)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 5, true, true)
+        SYSTEM.WAIT(100)
+        VEHICLE.SET_VEHICLE_DOORS_SHUT(vehicle, true)
+        SYSTEM.WAIT(100)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 0, false, false)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 1, false, false)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 2, false, false)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 3, false, false)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 4, false, false)
+        VEHICLE.SET_VEHICLE_DOOR_OPEN(vehicle, 5, false, false)
+        SYSTEM.WAIT(100)
+        local spamdoors = true
+    end
+end
+
+function remove_window_fl(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.REMOVE_VEHICLE_WINDOW(vehicle, 0)
+    end
+end
+
+function remove_window_fr(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.REMOVE_VEHICLE_WINDOW(vehicle, 1)
+    end
+end
+
+function remove_window_rl(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.REMOVE_VEHICLE_WINDOW(vehicle, 2)
+    end
+end
+
+function remove_window_rr(vehicle)
+    local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    if rqCtrl(vehicle, 0.5) then
+        VEHICLE.REMOVE_VEHICLE_WINDOW(vehicle, 3)
+    end
+end
+
+
+-- neons
+
+function setneondelay(value)
+    if tonumber(value) and tonumber(value) > 0 then
+        set_neon_delay = tonumber(value)
+    end
+end
+
+function random_bool()
+    local random_num = math.random(0, 1)
+    if random_num == 0 then return false elseif random_num == 1 then return true end
+end
+
+function random_bool1()
+    local random_num0 = math.random(0, 1)
+    if random_num0 == 0 then return false elseif random_num0 == 1 then return true end
+    local random_num1 = math.random(0, 1)
+    if random_num1 == 0 then return false elseif random_num1 == 1 then return true end
+    local random_num2 = math.random(0, 1)
+    if random_num2 == 0 then return false elseif random_num2 == 1 then return true end
+    local random_num3 = math.random(0, 1)
+    if random_num3 == 0 then return false elseif random_num3 == 1 then return true end
+end
+
+function random_int()
+    local int = math.random(0, 3)
+    return int
+end
+
+function random_int2()
+    local int = math.random(0, 255)
+    return int
+end
+
+function neon_cir_l(vehicle)
+    if complete_l then
+        local complete_l = false
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        g_util.yield(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_l = true
+    end
+end
+
+function neon_cir_r(vehicle)
+    if complete_r then
+        local complete_r = false
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_r = true
+    end
+end
+
+function neon_follow(vehicle)
+    if complete_f then
+        local complete_f = false
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        SYSTEM.WAIT(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_f = true
+    end
+end
+
+function neon_chase(vehicle)
+    if complete_c then
+        local complete_c = false
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        SYSTEM.WAIT(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_c = true
+    end
+end
+
+function neon_police(vehicle)
+    if complete_p then
+        local complete_p = false
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 255, 0, 0)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        SYSTEM.WAIT(150)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(50)
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 0, 0, 255)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        SYSTEM.WAIT(125)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(50)
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 0, 0, 255)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        SYSTEM.WAIT(125)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(50)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_p = true
+    end
+end
+
+function neon_random(vehicle)
+    if complete_ra then
+        local complete_ra = false
+        local random_l = random_int(0, 3)
+        local random_r = random_int2(0, 255)
+        local random_g = random_int2(0, 255)
+        local random_b = random_int2(0, 255)
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, random_r, random_g, random_b)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, random_l, true)
+        SYSTEM.WAIT(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_ra = true
+    end
+end
+
+function neon_random2(vehicle)
+    if complete_ra2 then
+        local complete_ra2 = false
+        local random_num0 = random_bool1()
+        local random_num1 = random_bool1()
+        local random_num2 = random_bool1()
+        local random_num3 = random_bool1()   
+        local random_r = random_int2(0, 255)
+        local random_g = random_int2(0, 255)
+        local random_b = random_int2(0, 255)
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, random_r, random_g, random_b)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, random_num0)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, random_num1)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, random_num2)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, random_num3)
+        SYSTEM.WAIT(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_ra2 = true
+    end
+end
 
 while g_isRunning do
 
     local vehicle = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
 
-    if VehicleBrakeTog then
-        vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.GET_PLAYER_PED(PLAYER.PLAYER_ID()), true)
-        if CONTROL.IS_CONTROL_PRESSED(22, 22) then
-            VEHICLE.SET_VEHICLE_FORWARD_SPEED(vehicle, 0)
+    if reative_neon then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            if CONTROL.IS_CONTROL_PRESSED(2, 72) then
+                VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+                VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 255, 0, 0)
+            elseif CONTROL.IS_CONTROL_PRESSED(2, 71) then
+                VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+                VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 255, 255, 255)
+            elseif CONTROL.IS_CONTROL_PRESSED(2, 63) then
+                VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+                VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 0,0,255)
+            elseif CONTROL.IS_CONTROL_PRESSED(2, 64) then
+                VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+                VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 0,0,255)
+            else
+                for i = 0, 3 do
+                    VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+                end
+            end
         end
     end
 
+    if brake_neon then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            if CONTROL.IS_CONTROL_PRESSED(2, 72) then
+                VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+                VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 255, 0, 0)
+            else
+                for i = 0, 3 do
+                    VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+                end
+            end
+        end
+    end
+
+    if neons_circle_l then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_cir_l(vehicle)
+        end
+    end
+
+    if neons_circle_r then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_cir_r(vehicle)
+        end
+    end
+
+    if neons_follow then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_follow(vehicle)
+        end
+    end
+
+    if neons_chase then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_chase(vehicle)
+        end
+    end
+    
+    if neons_police then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_police(vehicle)
+        end
+    end
+
+    if neons_random then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_random(vehicle)
+        end
+    end
+
+    if neons_random2 then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_random2(vehicle)
+        end
+    end
+
+    if vehicle and modify then
+        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, modifier)
+    else
+        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, 0)
+    end
+
+    if VehicleBrakeTog then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            VehicleBrake(vehicle)
+        end
+    end
+        
     if waypointcheck then
         if not UI.DOES_BLIP_EXIST(blip) then
         local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID()), false)
@@ -346,9 +755,17 @@ while g_isRunning do
         end
     end
 
+    if SpamDoors then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            SpamDoors(vehicle)
+        end
+    end
+
     if flashy_brake then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             if CONTROL.IS_CONTROL_PRESSED(2, 72) then
+                VEHICLE.SET_VEHICLE_BRAKE_LIGHTS(vehicle, false)
+                VEHICLE.SET_VEHICLE_BRAKE_LIGHTS(vehicle, false)
                 VEHICLE.SET_VEHICLE_BRAKE_LIGHTS(vehicle, false)
                 SYSTEM.WAIT(125)
             else
@@ -357,19 +774,7 @@ while g_isRunning do
         end
     end
 
-    if SpamDoors then
-        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
-            SpamDoors(vehicle)
-        end
-    end
-
-    if SetSpeed then
-        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, modifier)
-    else
-        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, 0)
-    end
-
-    SYSTEM.WAIT(10)
+    g_util.yield(300)
 end
 
 g_lua.unregister()
