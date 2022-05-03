@@ -40,4 +40,21 @@ known bug:  Crashes if you have a License active and leave the Vehicle
 
 vehicle_options.lua functions:
 
-just a bunch of vehicle options, too lazy to write down all of them
+Options:
+- Anti Lock On
+- Better Vehicle Fly
+- Instant Turn 0-360 Degree
+- Speed Editor
+- Instant Handbrake
+- Tesla Autopilot
+-Open Window (chose any)
+- ABS Like Brake Light
+- BOOST
+- BOOST Reverse
+- Flip
+- Pop All Tires
+- Pop (chosen) Tire
+- Spammy Doors
+
++ Build in Better_Neons.lua
++ reworked GUI/IMGUI
