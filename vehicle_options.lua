@@ -8,10 +8,11 @@
 --[     !:!   :!:  !:!  :!:  :!:  !:!       :!:  :!:  !:!  :!:       ]--
 --[ :::: ::    ::  :::   ::   :::: ::       :::  ::::: ::   ::       ]--
 --[ :: : :     :   :::  :    :: :  :         ::   : :  :   : :       ]--
+--[          THANKS  TO  SATTY  FOR  THE  TELEPORT  OPTIONS          ]--
 
 g_lua.register()
 
-g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Vehicle Options v3 \nHave Fun!", 5000)
+g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Vehicle Options v4 \nHave Fun!", 5000)
 g_gui.add_toast("Suggestions to my Discord: ODIN.eu#4435", 5000)
 
 
@@ -27,6 +28,8 @@ neons_chase = false
 neons_police = false
 neons_random = false
 neons_random2 = false
+neons_halloween = false
+neons_blood = false
 set_neon_delay = 100
 complete_l = true
 complete_r = true
@@ -35,12 +38,24 @@ complete_c = true
 complete_p = true
 complete_ra = true
 complete_ra2 = true
+complete_h = true
+complete_b = true
 local set_degree = 180
 modify = false
 modifier = 0
 VehicleBrakeTog = false
 local spamdoors = false
 local flashy_brake = false
+complete_ph = true
+headlights_police = false
+complete_col = true
+colors_police = false
+local headlight_flasher = false
+slam = false
+Slam = false
+SLAM = false
+SLAAAM = false
+local slam_int_ = 25
 
 
 -- gui
@@ -76,17 +91,21 @@ end)
 
 function Neon_Options()
     if g_gui.is_open() then
-		g_imgui.set_next_window_size(vec2(250, 300))
+		g_imgui.set_next_window_size(vec2(275, 430))
 		if g_imgui.begin_window("Neons Menu", ImGuiWindowFlags_NoResize) then
         g_imgui.begin_child("mod_menu", vec2(), true)
         g_imgui.add_checkbox("Brake Neons", function(bool) brake_neon = bool end)
         g_imgui.add_checkbox("Police Neons", function(bool) neons_police = bool end)
+        g_imgui.add_checkbox("Police Headlight PersVehicle", function(bool) headlights_police = bool end)
+        g_imgui.add_checkbox("Police Mode", function (bool) headlights_police = bool neons_police = bool end)
         g_imgui.add_checkbox("Reactive Neons", function(bool) reative_neon = bool end)
         g_imgui.add_input_string("Set Speed", function(value) setneondelay(value) end)
         g_imgui.add_checkbox("Chasing Neons", function(bool) neons_chase = bool end)
         g_imgui.add_checkbox("Circle Neons (Left)", function(bool) neons_circle_l = bool end)
         g_imgui.add_checkbox("Circle Neons (Right)", function(bool) neons_circle_r = bool end)
+        g_imgui.add_checkbox("Blood Rain", function(bool) neons_blood = bool end)
         g_imgui.add_checkbox("Following Neons", function(bool) neons_follow = bool end)
+        g_imgui.add_checkbox("Halloween Neons", function(bool) neons_halloween = bool end)
         g_imgui.add_checkbox("Random Neon", function(bool) neons_random = bool  end)
         g_imgui.add_checkbox("Random Neons 2", function(bool) neons_random2 = bool end)
         g_imgui.end_child()
@@ -97,9 +116,9 @@ end
 
 function Vehicl_fun_Options()
     if g_gui.is_open() then
-        local length = 315
+        local length = 320
         local btn_height = 25
-		g_imgui.set_next_window_size(vec2(350, 300))
+		g_imgui.set_next_window_size(vec2(350, 310))
 		if g_imgui.begin_window("Vehicle Fun Options", ImGuiWindowFlags_NoResize) then
         g_imgui.begin_child("mod_menu", vec2(), true)
         g_imgui.add_button("BOOST", vec2(length, btn_height), function() boost(g_util.get_selected_player()) end)
@@ -119,9 +138,9 @@ end
 
 function Usefull_Options()
     if g_gui.is_open() then
-        local length = 315
+        local length = 320
         local btn_height = 25
-		g_imgui.set_next_window_size(vec2(350, 300))
+		g_imgui.set_next_window_size(vec2(350, 550))
 		if g_imgui.begin_window("Usefull-isch Options", ImGuiWindowFlags_NoResize) then
         g_imgui.begin_child("mod_menu", vec2(), true)
         g_imgui.add_input_string("Set Veh Speed", function(value) SetSpeed(value) end)
@@ -133,6 +152,15 @@ function Usefull_Options()
         g_imgui.add_button("Open Window Rear Left", vec2(length, btn_height), function() remove_window_rl(g_util.get_selected_player()) end)
         g_imgui.add_button("Open Window Rear Right", vec2(length, btn_height), function() remove_window_rr(g_util.get_selected_player()) end)
         g_imgui.add_checkbox("ABS Like Brake lights", function(bool) flashy_brake = bool end)
+        g_imgui.add_checkbox("Headlight Flasher [key: 1 and E]", function(bool) headlight_flasher = bool end)
+        g_imgui.add_button("TP into Personal Vehicle", vec2(length, btn_height), function() drivepersonalveh() end)
+        g_imgui.add_button("TP Personal Vehicle to you", vec2(length, btn_height), function() tp_veh_to_self() end)
+        g_imgui.add_button("TP into last used Vehicle", vec2(length, btn_height), function() drivelastveh() end)
+        g_imgui.add_button("TP to last used Vehicle", vec2(length, btn_height), function() tp_to_last_veh() end)
+        g_imgui.add_input_string("Slam Value", function(value) slam_int(value) end)
+        g_imgui.add_text("Recommended to keep the Slam under 100.")
+        g_imgui.add_checkbox("Slam", function(bool) Slam = bool end)
+        g_imgui.add_checkbox("Slam preset", function(bool) SLAM = bool end)
         g_imgui.end_child()
         g_imgui.end_window()
         end
@@ -179,6 +207,43 @@ function is_veh_personal(veh)
         return false
     end
 end
+
+function TeleportSelf(pos)
+
+    local entity = PLAYER.PLAYER_PED_ID()
+
+    if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+        entity = PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID())
+    end
+
+    if rqCtrl(entity, 0.5) then
+        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(entity, pos.x, pos.y, pos.z)
+        if pos.h then
+            ENTITY.SET_ENTITY_HEADING(entity, pos.h)
+        end
+    end
+
+end
+
+function getAllVehs(radius)
+    local me, vehs, allvehs = PLAYER.PLAYER_PED_ID(), {}, POOL.GET_MAX_VEHICLES()
+
+    for i = 0, allvehs do
+        local veh = POOL.GET_VEHICLE_AT_INDEX(i)
+
+        if ENTITY.DOES_ENTITY_EXIST(veh) then
+            if radius == nil then
+                table.insert(vehs, veh)
+            elseif radius > getDistanceToEntity(me, veh) then
+                table.insert(vehs, veh)
+            end
+        end
+
+    end
+
+    return vehs
+end
+
 
 
 -- vehicle functions
@@ -425,6 +490,76 @@ function remove_window_rr(vehicle)
     end
 end
 
+function drivepersonalveh()
+    local vehs, ped = getAllVehs(), PLAYER.PLAYER_PED_ID()
+
+    for i = 1, #vehs do
+
+        if is_veh_personal(vehs[i]) then
+
+            local inveh = VEHICLE.GET_PED_IN_VEHICLE_SEAT(vehs[i], -1, true)
+
+            if ENTITY.DOES_ENTITY_EXIST(inveh) then 
+                if inveh ~= PLAYER.PLAYER_PED_ID() then PED.CLEAR_PED_TASKS_IMMEDIATELY(inveh) end
+            end
+
+            rqCtrl(vehs[i])
+            PED.SET_PED_INTO_VEHICLE(ped, vehs[i], -1)
+        end
+
+    end
+
+end
+
+function tp_veh_to_self()
+    local vehs, ped = getAllVehs(), PLAYER.PLAYER_PED_ID()
+
+    for i = 1, #vehs do
+
+        if is_veh_personal(vehs[i]) then
+            rqCtrl(vehs[i])
+            local pos = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ped, 0, 5, 0)
+            local heading = ENTITY.GET_ENTITY_HEADING(ped)
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(vehs[i], pos.x, pos.y, pos.z)
+            ENTITY.SET_ENTITY_HEADING(vehs[i], heading+90)
+            VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(vehs[i], 5)
+        end
+
+    end
+end
+
+function drivelastveh()
+    local ped = PLAYER.PLAYER_PED_ID()
+    local veh = PED.GET_VEHICLE_PED_IS_IN(ped, true)
+
+    if not ENTITY.DOES_ENTITY_EXIST(veh) then return end
+
+    local inveh = VEHICLE.GET_PED_IN_VEHICLE_SEAT(veh, -1, true)
+
+    if ENTITY.DOES_ENTITY_EXIST(inveh) then 
+        if inveh ~= PLAYER.PLAYER_PED_ID() then PED.CLEAR_PED_TASKS_IMMEDIATELY(inveh) end
+    end
+
+    rqCtrl(veh)
+    PED.SET_PED_INTO_VEHICLE(ped, veh, -1)
+
+end
+
+function tp_to_last_veh()
+    local ped = PLAYER.PLAYER_PED_ID()
+    local veh = PED.GET_VEHICLE_PED_IS_IN(ped, true)
+
+    if not ENTITY.DOES_ENTITY_EXIST(veh) then return end
+    local pos = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(veh, -3, 0, 0)
+    TeleportSelf(pos)
+end
+
+function slam_int(value)
+    if tonumber(value) and tonumber(value) > 0 then
+        slam_int_ = math.floor(-1*tonumber(value)/2)
+    end
+end
+
 
 -- neons
 
@@ -517,6 +652,40 @@ function neon_cir_r(vehicle)
             VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
         end
         local complete_r = true
+    end
+end
+
+function neon_halloween(vehicle)
+    if complete_h then
+        local complete_h = false
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 255, 42, 0)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 148, 0, 211)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 148, 0, 211)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        g_util.yield(set_neon_delay)
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 255, 42, 0)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, false)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, true)
+        g_util.yield(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_h = true
     end
 end
 
@@ -613,6 +782,31 @@ function neon_police(vehicle)
     end
 end
 
+function headlight_police(vehicle)
+    if complete_ph then
+        local complete_ph = false
+        VEHICLE.SET_VEHICLE_XENON_LIGHTS_COLOR(vehicle, 8)
+        VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, true)
+        SYSTEM.WAIT(150)
+        VEHICLE.SET_VEHICLE_XENON_LIGHTS_COLOR(vehicle, 0)
+        VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, false)
+        SYSTEM.WAIT(50)
+        VEHICLE.SET_VEHICLE_XENON_LIGHTS_COLOR(vehicle, 1)
+        VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, true)
+        SYSTEM.WAIT(125)
+        VEHICLE.SET_VEHICLE_XENON_LIGHTS_COLOR(vehicle, 0)
+        VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, false)
+        SYSTEM.WAIT(50)
+        VEHICLE.SET_VEHICLE_XENON_LIGHTS_COLOR(vehicle, 1)
+        VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, true)
+        SYSTEM.WAIT(125)
+        VEHICLE.SET_VEHICLE_XENON_LIGHTS_COLOR(vehicle, 0)
+        VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, false)
+        SYSTEM.WAIT(50)
+        local complete_ph = true
+    end
+end
+
 function neon_random(vehicle)
     if complete_ra then
         local complete_ra = false
@@ -650,6 +844,24 @@ function neon_random2(vehicle)
             VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
         end
         local complete_ra2 = true
+    end
+end
+
+function neon_blood(vehicle)
+    if complete_b then
+        local complete_b = false
+        local random_num0 = random_bool1()
+        local random_num1 = random_bool1()
+        VEHICLE.SET_VEHICLE_NEON_LIGHTS_COLOR(vehicle, 101, 28, 50)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 0, random_num0)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 1, random_num1)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 2, true)
+        VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, 3, false)
+        SYSTEM.WAIT(set_neon_delay)
+        for i = 0, 3 do
+            VEHICLE.SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, i, false)
+        end
+        local complete_b = true
     end
 end
 
@@ -704,6 +916,12 @@ while g_isRunning do
         end
     end
 
+    if neons_halloween then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_halloween(vehicle)
+        end
+    end
+
     if neons_follow then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             neon_follow(vehicle)
@@ -722,6 +940,18 @@ while g_isRunning do
         end
     end
 
+    if colors_police then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+        color_police(vehicle)
+        end
+    end
+
+    if headlights_police then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            headlight_police(vehicle)
+        end
+    end
+
     if neons_random then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             neon_random(vehicle)
@@ -731,6 +961,18 @@ while g_isRunning do
     if neons_random2 then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             neon_random2(vehicle)
+        end
+    end
+
+    if neons_blood then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            neon_blood(vehicle)
+        end
+    end
+
+    if loops1 then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            loop1(vehicle)
         end
     end
 
@@ -761,6 +1003,22 @@ while g_isRunning do
         end
     end
 
+    if Slam then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, slam_int_, true, true, true, false)
+        else
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 0, true, true, true, false)
+        end
+    end
+
+    if SLAM then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, -15, true, true, true, false)
+        else
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 0, true, true, true, false)
+        end
+    end
+
     if flashy_brake then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             if CONTROL.IS_CONTROL_PRESSED(2, 72) then
@@ -774,7 +1032,17 @@ while g_isRunning do
         end
     end
 
-    g_util.yield(300)
+    if headlight_flasher then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            if CONTROL.IS_CONTROL_PRESSED(2, 157) or CONTROL.IS_CONTROL_PRESSED(2, 38) then
+                VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, true)
+            else
+                VEHICLE.SET_VEHICLE_FULLBEAM(vehicle, false)
+            end
+        end
+    end
+
+    g_util.yield(10)
 end
 
 g_lua.unregister()
