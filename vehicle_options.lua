@@ -12,8 +12,8 @@
 
 g_lua.register()
 
-g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Vehicle Options v4 \nHave Fun!", 5000)
-g_gui.add_toast("Suggestions to my Discord: ODIN.eu#4435", 5000)
+g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Vehicle Options v6  \nHave Fun!", 5000)
+g_gui.add_toast("Suggestions to my Discord: sk1d#0187", 5000)
 
 
 -- global
@@ -56,13 +56,21 @@ Slam = false
 SLAM = false
 SLAAAM = false
 local slam_int_ = 25
+local slam_int_2 = 25
+shift_drift = false
+downforce = false
+acc = false
+beyblades = false
+Fidget = false
 
 
 -- gui
 
+g_gui.add_button("vehicle_quick_actions", "Fix low Grip", "Fix Vehicle low grip if it get stuck", function() grip(VEHICLE.SET_VEHICLE_REDUCE_GRIP(PLAYER.GET_PLAYER_VEHICLE(PLAYER.PLAYER_ID()), false)) end)
 g_gui.add_input_int("vehicle_quick_actions", "Degree", set_degree, 1, 2147483647, 1, 1, function(int) set_degree = int end)
 g_gui.add_button("vehicle_quick_actions", "Turn Vehicle", function() rotate(g_util.get_selected_player()) end)
 g_gui.add_toggle("vehicle_options", "Better Vehicle Fly", "WASD: Moving | CapsLock: Up | Shift: Speed | Ctrl: Down | Mouse: Rotate", function(on) noclip=on Noclip(g_util.get_selected_player()) end)
+g_gui.add_toggle("vehicle_options", "Glide Fly", function(bool) hover = bool end)
 g_gui.add_toggle("vehicle_options", "Anti Lock On", "Prevent Rockets to lock on you.", function(on) lockon=on AntiLockOn(g_util.get_selected_player()) end)
 g_gui.add_toggle("vehicle_options", "Neon Features", function(on) neon_window=on
     if neon_window then
@@ -85,7 +93,20 @@ g_gui.add_toggle("vehicle_options", "Usefull-isch Options", function(on) usefull
         g_hooking.unregister_hook(usefullwindow)
     end
 end)
-
+g_gui.add_toggle("vehicle_options", "Wheels menu", function(on) wheel_window=on
+    if wheel_window then
+        wheelwindow = g_hooking.register_D3D_hook(Wheel_Window)
+    else
+        g_hooking.unregister_hook(wheelwindow)
+    end
+end)
+g_gui.add_toggle("vehicle_options", "Race menu", function(on) race_window=on
+    if race_window then
+        racewindow = g_hooking.register_D3D_hook(Race_Window)
+    else
+        g_hooking.unregister_hook(racewindow)
+    end
+end)
 
 -- imgui
 
@@ -96,7 +117,7 @@ function Neon_Options()
         g_imgui.begin_child("mod_menu", vec2(), true)
         g_imgui.add_checkbox("Brake Neons", function(bool) brake_neon = bool end)
         g_imgui.add_checkbox("Police Neons", function(bool) neons_police = bool end)
-        g_imgui.add_checkbox("Police Headlight PersVehicle", function(bool) headlights_police = bool end)
+        g_imgui.add_checkbox("Police Headlight ", function(bool) headlights_police = bool end)
         g_imgui.add_checkbox("Police Mode", function (bool) headlights_police = bool neons_police = bool end)
         g_imgui.add_checkbox("Reactive Neons", function(bool) reative_neon = bool end)
         g_imgui.add_input_string("Set Speed", function(value) setneondelay(value) end)
@@ -118,7 +139,7 @@ function Vehicl_fun_Options()
     if g_gui.is_open() then
         local length = 320
         local btn_height = 25
-		g_imgui.set_next_window_size(vec2(350, 310))
+		g_imgui.set_next_window_size(vec2(350, 370))
 		if g_imgui.begin_window("Vehicle Fun Options", ImGuiWindowFlags_NoResize) then
         g_imgui.begin_child("mod_menu", vec2(), true)
         g_imgui.add_button("BOOST", vec2(length, btn_height), function() boost(g_util.get_selected_player()) end)
@@ -130,6 +151,8 @@ function Vehicl_fun_Options()
         g_imgui.add_button("Pop rear right tire", vec2(length, btn_height), function() poptires_rr(g_util.get_selected_player()) end)
         g_imgui.add_button("Pop rear left tire", vec2(length, btn_height), function() poptires_rl(g_util.get_selected_player()) end)
         g_imgui.add_checkbox("Spammy Doors", function(on) spamdoors=on SpamDoors(g_util.get_selected_player()) end)
+        g_imgui.add_checkbox("Beyblade", function(bool) Beyblades = bool end)
+        g_imgui.add_checkbox("Fidget Spinner", function(bool) Fidget = bool end)
         g_imgui.end_child()
         g_imgui.end_window()
         end
@@ -140,7 +163,7 @@ function Usefull_Options()
     if g_gui.is_open() then
         local length = 320
         local btn_height = 25
-		g_imgui.set_next_window_size(vec2(350, 550))
+		g_imgui.set_next_window_size(vec2(350, 580))
 		if g_imgui.begin_window("Usefull-isch Options", ImGuiWindowFlags_NoResize) then
         g_imgui.begin_child("mod_menu", vec2(), true)
         g_imgui.add_input_string("Set Veh Speed", function(value) SetSpeed(value) end)
@@ -161,6 +184,41 @@ function Usefull_Options()
         g_imgui.add_text("Recommended to keep the Slam under 100.")
         g_imgui.add_checkbox("Slam", function(bool) Slam = bool end)
         g_imgui.add_checkbox("Slam preset", function(bool) SLAM = bool end)
+        g_imgui.add_checkbox("Drift Mode [SHIFT]", function(bool) shift_drift = bool end)
+        g_imgui.end_child()
+        g_imgui.end_window()
+        end
+    end
+end
+
+function Wheel_Window()
+    if g_gui.is_open() then
+        local length = 245
+        local btn_height = 25
+        g_imgui.set_next_window_size(vec2(275, 200))
+        if g_imgui.begin_window("Wheels Menu", ImGuiWindowFlags_NoResize) then
+        g_imgui.begin_child("mod_menu", vec2(), true)
+        g_imgui.add_button("Benny Wheels Original", vec2(length, btn_height), function() BennyWheelsOriginal() end)
+        g_imgui.add_button("Benny Wheels Bespok", vec2(length, btn_height), function() BennyWheelsBespoke() end)
+        g_imgui.add_button("Open Wheels", vec2(length, btn_height), function() OpenWheels() end)
+        g_imgui.add_button("Street Wheels", vec2(length, btn_height), function() StreetWheels() end)
+        g_imgui.add_button("Track Wheels", vec2(length, btn_height), function() TrackWheels() end)
+        g_imgui.end_child()
+        g_imgui.end_window()
+        end
+    end
+end
+
+function Race_Window()
+    if g_gui.is_open() then
+        local length = 245
+        local btn_height = 25
+        g_imgui.set_next_window_size(vec2(275, 150))
+        if g_imgui.begin_window("Race Menu", ImGuiWindowFlags_NoResize) then
+        g_imgui.begin_child("mod_menu", vec2(), true)
+        g_imgui.add_checkbox("Slightly higher speed and acceleration", function(boool) acc = bool end)
+        g_imgui.add_checkbox("Downforce", function(bool) downforce = bool end)
+        g_imgui.add_text("don't use on tracks with big jumps")
         g_imgui.end_child()
         g_imgui.end_window()
         end
@@ -246,7 +304,7 @@ end
 
 
 
--- vehicle functions
+-- vehicle functions               
 
 function SetSpeed(value)
     if tonumber(value) and tonumber(value) > 0 then
@@ -557,6 +615,52 @@ end
 function slam_int(value)
     if tonumber(value) and tonumber(value) > 0 then
         slam_int_ = math.floor(-1*tonumber(value)/2)
+    end
+end
+
+function slam_int2(value)
+    if tonumber(value) and tonumber(value) > 0 then
+        slam_int_2 = math.floor(-1*tonumber(value)/2)
+    end
+end
+
+function BennyWheelsOriginal()
+    if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+          local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
+          VEHICLE.SET_VEHICLE_WHEEL_TYPE(vehicle, 8)
+          VEHICLE.SET_VEHICLE_MOD(vehicle, 23, 1, true)
+    end
+end
+
+function BennyWheelsBespoke()
+    if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+        local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
+        VEHICLE.SET_VEHICLE_WHEEL_TYPE(vehicle, 9)
+        VEHICLE.SET_VEHICLE_MOD(vehicle, 23, 1, true)
+    end
+end
+
+function OpenWheels()
+    if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+        local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
+        VEHICLE.SET_VEHICLE_WHEEL_TYPE(vehicle, 10)
+        VEHICLE.SET_VEHICLE_MOD(vehicle, 23, 1, true)
+    end
+end
+
+function StreetWheels()
+    if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+        local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
+        VEHICLE.SET_VEHICLE_WHEEL_TYPE(vehicle, 11)
+        VEHICLE.SET_VEHICLE_MOD(vehicle, 23, 1, true)
+    end
+end
+
+function TrackWheels()
+    if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+        local vehicle = PED.GET_VEHICLE_PED_IS_IN(PLAYER.PLAYER_PED_ID(), false)
+        VEHICLE.SET_VEHICLE_WHEEL_TYPE(vehicle, 12)
+        VEHICLE.SET_VEHICLE_MOD(vehicle, 23, 1, true)
     end
 end
 
@@ -970,6 +1074,14 @@ while g_isRunning do
         end
     end
 
+    if shift_drift and PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+        if CONTROL.IS_CONTROL_PRESSED(2, 21) then
+            VEHICLE.SET_VEHICLE_REDUCE_GRIP(vehicle, true)
+        else
+            VEHICLE.SET_VEHICLE_REDUCE_GRIP(vehicle, false)
+        end
+    end
+
     if loops1 then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             loop1(vehicle)
@@ -981,7 +1093,7 @@ while g_isRunning do
     else
         VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, 0)
     end
-
+    
     if VehicleBrakeTog then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             VehicleBrake(vehicle)
@@ -1011,12 +1123,34 @@ while g_isRunning do
         end
     end
 
+    if hover then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, slam_int_2, true, true, true, false)
+        else
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 0, true, true, true, false)
+        end
+    end
+
     if SLAM then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, -15, true, true, true, false)
         else
             ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 0, true, true, true, false)
         end
+    end
+
+    if downforce then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, -8, true, true, true, false)
+        else
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 0, true, true, true, false)
+        end
+    end
+
+    if vehicle and acc then
+        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, 15)
+    else
+        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, 0)
     end
 
     if flashy_brake then
@@ -1041,6 +1175,29 @@ while g_isRunning do
             end
         end
     end
+
+    if Beyblades then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            VEHICLE.SET_VEHICLE_REDUCE_GRIP(vehicle, true)
+            ENTITY.APPLY_FORCE_TO_ENTITY(vehicle, 1, 1, 0, 0, 100, 100, 0, 0, true, true, true, false, true)
+        else
+            VEHICLE.SET_VEHICLE_REDUCE_GRIP(vehicle, false)
+            ENTITY.APPLY_FORCE_TO_ENTITY(vehicle, 1, 1, 0, 0, 0, 0, 0, 0, true, true, true, false, true)
+        end
+    end
+     
+    if Fidget then
+        if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
+            VEHICLE.SET_VEHICLE_REDUCE_GRIP(vehicle, true)
+            ENTITY.APPLY_FORCE_TO_ENTITY(vehicle, 1, 1, 0, 0, 1000, 1200, 0, 0, true, true, true, false, true)
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 25, true, true, true, false)
+        else
+            VEHICLE.SET_VEHICLE_REDUCE_GRIP(vehicle, false)
+            ENTITY.APPLY_FORCE_TO_ENTITY(vehicle, 1, 1, 0, 0, 0, 0, 0, 0, true, true, true, false, true)
+            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 0, true, true, true, false)
+        end
+    end
+
 
     g_util.yield(10)
 end
