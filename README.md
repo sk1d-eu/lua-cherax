@@ -55,6 +55,14 @@ Options:
 - Pop All Tires
 - Pop (chosen) Tire
 - Spammy Doors
+- Glide Fly
+- Fix low Grip bug Button
+- Beyblade mode
+- Fidget mode
+- Drift Mode [activate with Shift]
 
+
++ Wheel Options - Menu // Wheel Types which aren't in the menu after selecting one you can use the main menu to change the Wheel
++ Race Menu
 + Build in Better_Neons.lua
 + reworked GUI/IMGUI
