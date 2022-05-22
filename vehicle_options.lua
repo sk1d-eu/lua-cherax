@@ -12,7 +12,7 @@
 
 g_lua.register()
 
-g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Vehicle Options v6  \nHave Fun!", 5000)
+g_gui.add_toast("Welcome ".. PLAYER.GET_PLAYER_NAME(PLAYER.PLAYER_ID()) .." to Vehicle Options v6.1  \nHave Fun!", 5000)
 g_gui.add_toast("Suggestions to my Discord: sk1d#0187", 5000)
 
 
@@ -216,7 +216,9 @@ function Race_Window()
         g_imgui.set_next_window_size(vec2(275, 150))
         if g_imgui.begin_window("Race Menu", ImGuiWindowFlags_NoResize) then
         g_imgui.begin_child("mod_menu", vec2(), true)
-        g_imgui.add_checkbox("Slightly higher speed and acceleration", function(boool) acc = bool end)
+        g_imgui.add_input_string("Set Veh Speed", function(value) SetSpeed(value) end)
+        g_imgui.add_text("Recommended to keep under 25")
+        g_imgui.add_checkbox("Modify Speed", function(value) modify = value end)
         g_imgui.add_checkbox("Downforce", function(bool) downforce = bool end)
         g_imgui.add_text("don't use on tracks with big jumps")
         g_imgui.end_child()
@@ -1147,12 +1149,6 @@ while g_isRunning do
         end
     end
 
-    if vehicle and acc then
-        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, 15)
-    else
-        VEHICLE.MODIFY_VEHICLE_TOP_SPEED(vehicle, 0)
-    end
-
     if flashy_brake then
         if PLAYER.IS_PLAYER_IN_ANY_VEHICLE(PLAYER.PLAYER_ID()) then
             if CONTROL.IS_CONTROL_PRESSED(2, 72) then
@@ -1197,7 +1193,6 @@ while g_isRunning do
             ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(vehicle, 0, 0, 0, 0, true, true, true, false)
         end
     end
-
 
     g_util.yield(10)
 end
