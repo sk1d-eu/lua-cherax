@@ -1,3 +1,5 @@
+#archived due to not longer maintained since ages
+
 # lua-cherax
 my lua's for cherax
 
